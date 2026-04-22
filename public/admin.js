@@ -1,48 +1,147 @@
 const API_URL = window.location.origin;
 let currentAdminTab = 'overview';
+let isAdminAuth = false; // Security Lock
 const app = document.getElementById('admin-app');
 
 // State
-let stats = { totalUsers: 0, totalDeposits: 0, totalEarned: 0 };
-let users = [];
-let platformPlans = [];
+let stats = { totalUsers: 0, totalEarned: 0 };
+let activePlans = [];
 
-// --- ENGINE ---
+// --- ENGINE & SECURITY ---
 function switchTab(tab) {
     currentAdminTab = tab;
     render();
+    window.scrollTo(0,0);
 }
 
 function notify(msg, type = "gold") {
+    const oldToast = document.querySelector('.toast-msg');
+    if(oldToast) oldToast.remove();
     const toast = document.createElement('div');
-    toast.className = `fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-xl font-black text-[10px] shadow-2xl ${type === 'gold' ? 'bg-[#C9A227] text-black' : 'bg-red-600 text-white'}`;
+    toast.className = `toast-msg fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-8 py-4 rounded-xl font-black text-[10px] shadow-2xl animate-in fade-in slide-in-from-top duration-300 ${type === 'gold' ? 'bg-[#C9A227] text-black' : 'bg-red-600 text-white'}`;
     toast.innerText = msg.toUpperCase();
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    setTimeout(() => toast.remove(), 3500);
 }
 
-// --- ACTIONS ---
+// --- STRICT AUTHENTICATION ---
+function handleAdminLogin() {
+    const user = document.getElementById('admin_user').value;
+    const pass = document.getElementById('admin_pass').value;
+
+    if (user === "WestpabloBluepeak" && pass === "@westpablo_bluepeak0917") {
+        isAdminAuth = true;
+        notify("Master Control Unlocked");
+        fetchAdminData(); // Load real DB data
+        render();
+    } else {
+        notify("Access Denied: Invalid Credentials", "red");
+    }
+}
+
+// --- REAL API ACTIONS ---
+async function fetchAdminData() {
+    try {
+        const res = await fetch(`${API_URL}/api/admin/stats`);
+        if (res.ok) {
+            const data = await res.json();
+            stats = data.stats;
+            activePlans = data.plans || [];
+            render();
+        }
+    } catch(e) {
+        console.log("Stats fetch error");
+    }
+}
+
 async function handleTopUp() {
-    const user = document.getElementById('target_user').value;
+    const targetUser = document.getElementById('target_user').value;
     const amount = document.getElementById('topup_amount').value;
     const type = document.getElementById('topup_type').value;
 
-    if(!user || !amount) return notify("Input required", "red");
-    
-    notify(`Crediting ₦${amount} to ${user}...`);
-    // Here you would fetch(`${API_URL}/api/admin/topup-user`, ...)
+    if (!targetUser || !amount) return notify("Input required", "red");
+
+    notify("Processing Credit...", "gold");
+
+    try {
+        const res = await fetch(`${API_URL}/api/admin/topup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetUser, amount: Number(amount), type })
+        });
+        const result = await res.json();
+        
+        if (res.ok) {
+            notify(`Success: Credited ₦${amount} to ${targetUser}`);
+            document.getElementById('target_user').value = '';
+            document.getElementById('topup_amount').value = '';
+            fetchAdminData();
+        } else {
+            notify(result.message || "Top-up failed", "red");
+        }
+    } catch (err) {
+        notify("Server Error", "red");
+    }
 }
 
 async function handleAddPlan() {
-    notify("Publishing Plan to Market...");
+    const name = document.getElementById('plan_name').value;
+    const minDeposit = document.getElementById('plan_min').value;
+    const dailyRoi = document.getElementById('plan_roi').value;
+    const duration = document.getElementById('plan_days').value;
+
+    if (!name || !minDeposit || !dailyRoi || !duration) return notify("All fields required", "red");
+
+    notify("Publishing Plan to Live Site...", "gold");
+
+    try {
+        const res = await fetch(`${API_URL}/api/admin/plans`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, minDeposit: Number(minDeposit), dailyRoi: Number(dailyRoi), duration: Number(duration) })
+        });
+        
+        if (res.ok) {
+            notify("Plan Published Successfully!");
+            fetchAdminData(); 
+        } else {
+            notify("Failed to publish plan", "red");
+        }
+    } catch (err) {
+        notify("Server Error", "red");
+    }
 }
 
 // --- UI COMPONENTS ---
-const AdminNav = () => `
-    <div class="flex gap-2 mb-8 overflow-x-auto pb-4 no-scrollbar">
+
+// 1. The Security Login Screen
+function LoginScreen() {
+    return `
+        <div class="pt-24 animate-in zoom-in duration-500 max-w-sm mx-auto">
+            <div class="text-center mb-12">
+                <div class="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span class="text-3xl">🛡️</span>
+                </div>
+                <h1 class="text-3xl font-black text-white italic tracking-tighter uppercase">Master <span class="text-[#C9A227]">Control</span></h1>
+                <p class="text-gray-500 text-[9px] uppercase tracking-[0.4em] mt-2 font-bold">Restricted Admin Access</p>
+            </div>
+            
+            <div class="space-y-4">
+                <input type="text" id="admin_user" placeholder="Admin ID" class="w-full bg-[#111827] border border-white/10 p-5 rounded-2xl text-white outline-none focus:border-[#C9A227] transition-all">
+                <input type="password" id="admin_pass" placeholder="Master Password" class="w-full bg-[#111827] border border-white/10 p-5 rounded-2xl text-white outline-none focus:border-[#C9A227] transition-all">
+                <button onclick="handleAdminLogin()" class="w-full bg-[#C9A227] py-5 rounded-2xl font-black text-black shadow-2xl shadow-yellow-500/20 active:scale-95 transition-all mt-4 uppercase tracking-widest text-[10px]">Authenticate</button>
+                <button onclick="window.location.href='/'" class="w-full bg-white/5 py-4 rounded-2xl font-black text-gray-400 text-[10px] uppercase tracking-widest mt-2">Return to Site</button>
+            </div>
+        </div>
+    `;
+}
+
+// 2. The Bottom Navigation Bar
+const AdminBottomNav = () => `
+    <div class="fixed bottom-0 left-0 right-0 bg-[#0B0B0B]/95 backdrop-blur-2xl border-t border-white/5 p-4 flex justify-around items-center z-50">
         ${['overview', 'users', 'plans', 'support'].map(t => `
-            <button onclick="switchTab('${t}')" class="px-6 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${currentAdminTab === t ? 'bg-[#1E90FF] text-white shadow-lg shadow-blue-500/20' : 'bg-white/5 text-gray-500 border border-white/5'}">
-                ${t}
+            <button onclick="switchTab('${t}')" class="flex flex-col items-center transition-all ${currentAdminTab === t ? 'text-[#C9A227] scale-110' : 'text-gray-600'}">
+                <span class="text-[8px] font-black uppercase tracking-widest">${t}</span>
             </button>
         `).join('')}
     </div>
@@ -52,26 +151,26 @@ function Overview() {
     return `
         <div class="animate-in fade-in duration-500">
             <div class="grid grid-cols-2 gap-4 mb-8">
-                <div class="glass p-6 rounded-[30px]">
+                <div class="bg-white/5 border border-white/5 p-6 rounded-[30px]">
                     <p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Total Users</p>
-                    <p class="text-2xl font-black text-white">1,204</p>
+                    <p class="text-2xl font-black text-white">${stats.totalUsers || 0}</p>
                 </div>
-                <div class="glass p-6 rounded-[30px]">
+                <div class="bg-white/5 border border-white/5 p-6 rounded-[30px]">
                     <p class="text-[9px] text-gray-500 font-bold uppercase mb-1">System Earnings</p>
-                    <p class="text-2xl font-black text-[#C9A227]">₦ 4.2M</p>
+                    <p class="text-xl font-black text-[#C9A227]">₦ ${stats.totalEarned || 0}</p>
                 </div>
             </div>
             
-            <div class="glass p-8 rounded-[40px] border-l-4 border-l-[#1E90FF]">
-                <h3 class="text-xs font-black text-white uppercase mb-6">Quick User Credit</h3>
+            <div class="bg-gradient-to-br from-[#111827] to-[#0B0B0B] p-8 rounded-[40px] border border-white/10 shadow-2xl mb-8">
+                <h3 class="text-xs font-black text-[#1E90FF] uppercase mb-6 tracking-widest">Manual User Credit</h3>
                 <div class="space-y-4">
-                    <input type="text" id="target_user" placeholder="Username" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-white text-xs outline-none">
+                    <input type="text" id="target_user" placeholder="Username of Investor" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-white text-xs outline-none">
                     <input type="number" id="topup_amount" placeholder="Amount (₦)" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-white text-xs outline-none">
                     <select id="topup_type" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-gray-400 text-xs outline-none">
-                        <option value="deposit">Deposit Balance</option>
-                        <option value="earned">Earned Balance</option>
+                        <option value="depositBalance">Deposit Balance</option>
+                        <option value="earnedBalance">Earned Profit</option>
                     </select>
-                    <button onclick="handleTopUp()" class="w-full bg-[#1E90FF] py-4 rounded-xl font-black text-[10px] uppercase shadow-lg shadow-blue-500/20">Authorize Credit</button>
+                    <button onclick="handleTopUp()" class="w-full bg-[#1E90FF] py-4 rounded-xl font-black text-[10px] uppercase shadow-lg shadow-blue-500/20 active:scale-95">Authorize Credit</button>
                 </div>
             </div>
         </div>
@@ -80,48 +179,30 @@ function Overview() {
 
 function PlanManager() {
     return `
-        <div class="animate-in slide-in-from-bottom duration-500">
-            <div class="glass p-8 rounded-[40px] mb-8">
-                <h3 class="text-xs font-black text-[#C9A227] uppercase mb-6 text-center">Architect New Plan</h3>
+        <div class="animate-in slide-in-from-right duration-500">
+            <div class="bg-gradient-to-br from-[#111827] to-[#0B0B0B] p-8 rounded-[40px] border border-white/10 shadow-2xl mb-8">
+                <h3 class="text-xs font-black text-[#C9A227] uppercase mb-6 text-center tracking-widest">Architect New Plan</h3>
                 <div class="grid grid-cols-2 gap-4 mb-6">
-                    <input type="text" placeholder="Plan Name" class="col-span-2 bg-black/40 border border-white/10 p-4 rounded-xl text-white text-xs outline-none">
-                    <input type="number" placeholder="Min Deposit" class="bg-black/40 border border-white/10 p-4 rounded-xl text-white text-xs outline-none">
-                    <input type="number" placeholder="Daily %" class="bg-black/40 border border-white/10 p-4 rounded-xl text-white text-xs outline-none">
-                    <input type="number" placeholder="Days" class="bg-black/40 border border-white/10 p-4 rounded-xl text-white text-xs outline-none">
-                    <select class="bg-black/40 border border-white/10 p-4 rounded-xl text-gray-400 text-xs outline-none">
-                        <option>Standard</option>
-                        <option>Elite (Gold Border)</option>
-                    </select>
+                    <input type="text" id="plan_name" placeholder="Plan Name" class="col-span-2 bg-black/40 border border-white/10 p-4 rounded-xl text-white text-xs outline-none">
+                    <input type="number" id="plan_min" placeholder="Min Deposit (₦)" class="bg-black/40 border border-white/10 p-4 rounded-xl text-white text-xs outline-none">
+                    <input type="number" id="plan_roi" placeholder="Daily % ROI" class="bg-black/40 border border-white/10 p-4 rounded-xl text-white text-xs outline-none">
+                    <input type="number" id="plan_days" placeholder="Duration (Days)" class="col-span-2 bg-black/40 border border-white/10 p-4 rounded-xl text-white text-xs outline-none">
                 </div>
-                <button onclick="handleAddPlan()" class="w-full bg-[#C9A227] text-black py-4 rounded-xl font-black text-[10px] uppercase">Publish to Live Market</button>
+                <button onclick="handleAddPlan()" class="w-full bg-[#C9A227] text-black py-4 rounded-xl font-black text-[10px] uppercase active:scale-95">Publish to Live Market</button>
             </div>
             
             <h4 class="text-[10px] text-gray-600 font-bold uppercase mb-4 pl-4 tracking-widest">Active Market Offerings</h4>
             <div class="space-y-3">
-                <div class="glass p-5 rounded-2xl flex justify-between items-center border-l-2 border-l-green-500">
-                    <div>
-                        <p class="text-white font-bold text-xs italic">Starter Peak</p>
-                        <p class="text-[8px] text-gray-500">15% ROI • 7 Days</p>
+                ${activePlans.length === 0 ? '<p class="text-xs text-gray-600 italic text-center">No plans published.</p>' : ''}
+                ${activePlans.map(plan => `
+                    <div class="bg-[#111827] p-5 rounded-2xl flex justify-between items-center border border-white/5">
+                        <div>
+                            <p class="text-white font-bold text-xs italic">${plan.name}</p>
+                            <p class="text-[9px] text-gray-500 uppercase tracking-widest">${plan.dailyRoi}% ROI • ${plan.duration} Days</p>
+                        </div>
+                        <span class="text-green-500 text-[8px] font-black uppercase bg-green-500/10 px-2 py-1 rounded">Live</span>
                     </div>
-                    <button class="text-red-500 text-[9px] font-black uppercase">Delete</button>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-function SupportCenter() {
-    return `
-        <div class="animate-in fade-in duration-500">
-            <h2 class="text-xs font-black text-[#1E90FF] uppercase mb-6 pl-2">Compliance Queue</h2>
-            <div class="glass p-6 rounded-[32px] border-l-2 border-l-yellow-500 mb-4">
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-[9px] text-blue-400 font-bold uppercase">User: Westpablo</span>
-                    <span class="text-[8px] text-gray-600">Pending</span>
-                </div>
-                <p class="text-white text-xs italic mb-4 leading-relaxed">"Help, I forgot my withdrawal PIN. I need to verify my account."</p>
-                <textarea class="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-white text-[10px] h-24 outline-none mb-4" placeholder="Type official staff response..."></textarea>
-                <button onclick="notify('Reply Sent')" class="w-full bg-white text-black py-3 rounded-xl font-black text-[9px] uppercase">Send Professional Reply</button>
+                `).join('')}
             </div>
         </div>
     `;
@@ -129,22 +210,28 @@ function SupportCenter() {
 
 // --- MASTER RENDER ---
 function render() {
+    if (!isAdminAuth) {
+        app.innerHTML = `<div class="min-h-screen bg-[#0B0B0B] text-white p-6 font-sans">${LoginScreen()}</div>`;
+        return;
+    }
+
     let content = '';
     if (currentAdminTab === 'overview') content = Overview();
-    if (currentAdminTab === 'users') content = `<div class="p-10 text-center text-gray-600 font-bold text-[10px] uppercase">User list encrypted. Fetching...</div>`;
+    if (currentAdminTab === 'users') content = `<div class="p-10 text-center text-gray-600 font-bold text-[10px] uppercase">User monitoring module active.</div>`;
     if (currentAdminTab === 'plans') content = PlanManager();
-    if (currentAdminTab === 'support') content = SupportCenter();
+    if (currentAdminTab === 'support') content = `<div class="p-10 text-center text-gray-600 font-bold text-[10px] uppercase">No pending support tickets.</div>`;
 
     app.innerHTML = `
-        <div class="max-w-md mx-auto min-h-screen p-6 pb-20">
+        <div class="max-w-md mx-auto min-h-screen bg-[#0B0B0B] text-white p-6 pb-24 font-sans selection:bg-[#C9A227]">
             <div class="flex justify-between items-center mb-10">
                 <h1 class="text-xl font-black italic tracking-tighter text-white uppercase">Control <span class="text-[#C9A227]">Vault</span></h1>
-                <a href="/" class="text-[9px] bg-white/5 border border-white/10 px-3 py-1 rounded-full text-gray-500 font-bold uppercase">Live Site</a>
+                <button onclick="window.location.href='/'" class="text-[9px] bg-white/5 border border-white/10 px-4 py-2 rounded-full text-gray-400 font-bold uppercase">Exit</button>
             </div>
-            ${AdminNav()}
             ${content}
+            ${AdminBottomNav()}
         </div>
     `;
 }
 
+// Start App
 render();
