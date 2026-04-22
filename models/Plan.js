@@ -2,12 +2,10 @@ const mongoose = require('mongoose');
 
 const planSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  minAmount: { type: Number, required: true },
-  dailyProfitPercent: { type: Number, required: true },
-  weeklyProfitPercent: { type: Number, required: true },
-  durationDays: { type: Number, required: true },
-  totalReturnPercent: { type: Number, required: true },
-  isBestPlan: { type: Boolean, default: false }
-}, { timestamps: true });
+  minDeposit: { type: Number, required: true },
+  dailyRoi: { type: Number, required: true },
+  duration: { type: Number, required: true },
+  createdAt: { type: Date, default: Date.now }
+});
 
 module.exports = mongoose.model('Plan', planSchema);
