@@ -25,11 +25,15 @@ async function switchTab(tab) {
 }
 
 function notify(msg, type = "gold") {
+    // Remove old toast if exists
+    const oldToast = document.querySelector('.toast-msg');
+    if(oldToast) oldToast.remove();
+
     const toast = document.createElement('div');
-    toast.className = `fixed top-10 left-1/2 -translate-x-1/2 z-[100] px-8 py-4 rounded-2xl font-black text-[10px] shadow-2xl animate-in fade-in slide-in-from-top duration-300 ${type === 'gold' ? 'bg-[#C9A227] text-black' : 'bg-red-600 text-white'}`;
+    toast.className = `toast-msg fixed top-10 left-1/2 -translate-x-1/2 z-[100] px-8 py-4 rounded-2xl font-black text-[10px] shadow-2xl animate-in fade-in slide-in-from-top duration-300 ${type === 'gold' ? 'bg-[#C9A227] text-black' : 'bg-red-600 text-white'}`;
     toast.innerText = msg.toUpperCase();
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3500);
+    setTimeout(() => toast.remove(), 4000);
 }
 
 // --- API ACTIONS ---
@@ -105,16 +109,21 @@ async function handleRegister() {
 }
 
 async function handlePayment(type) {
-    if (type === 'Withdraw') return notify("Withdrawal limit not reached. Contact Support.", "red");
+    if (type === 'Withdraw') {
+        return notify("Withdrawal limit not reached. Contact Support.", "red");
+    }
     
+    // 1. Ask user for amount
     const amountStr = prompt("Enter amount to deposit (₦):");
-    if (!amountStr) return;
+    if (!amountStr) return; // User cancelled
+    
     const amount = Number(amountStr);
     if (isNaN(amount) || amount < 1000) return notify("Minimum deposit is ₦1,000", "red");
 
     notify("Connecting to Secure Gateway...", "gold");
 
     try {
+        // 2. Contact Backend for Squad Payment Link
         const res = await fetch(`${API_URL}/api/payment/initiate`, {
             method: 'POST',
             headers: { 
@@ -125,6 +134,8 @@ async function handlePayment(type) {
         });
         
         const result = await res.json();
+        
+        // 3. Redirect to Squad Checkout Page
         if (res.ok && result.checkout_url) {
             window.location.href = result.checkout_url;
         } else {
@@ -251,7 +262,7 @@ function render() {
             <h2 class="text-4xl font-black text-white italic mb-4 uppercase">INVITE <span class="text-[#C9A227]">& EARN</span></h2>
             <div class="bg-[#111827] p-8 rounded-[40px] border border-dashed border-white/10 mx-6">
                 <p class="text-[9px] text-gray-600 font-bold uppercase mb-4 tracking-widest">Ref Link</p>
-                <div class="bg-black/50 p-4 rounded-xl border border-white/5 text-[#1E90FF] font-mono text-[9px] truncate">bluepeak.com/ref?id=${userData.username}</div>
+                <div class="bg-black/50 p-4 rounded-xl border border-white/5 text-[#1E90FF] font-mono text-[9px] truncate">bluepeak-finance.onrender.com/ref?id=${userData.username}</div>
             </div>
         </div>
     `;
