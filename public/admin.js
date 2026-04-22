@@ -1,6 +1,6 @@
 const API_URL = window.location.origin;
 let currentAdminTab = 'overview';
-let isAdminAuth = false; // Security Lock
+let isAdminAuth = false; 
 const app = document.getElementById('admin-app');
 
 // State
@@ -21,7 +21,7 @@ function notify(msg, type = "gold") {
     toast.className = `toast-msg fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-8 py-4 rounded-xl font-black text-[10px] shadow-2xl animate-in fade-in slide-in-from-top duration-300 ${type === 'gold' ? 'bg-[#C9A227] text-black' : 'bg-red-600 text-white'}`;
     toast.innerText = msg.toUpperCase();
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3500);
+    setTimeout(() => toast.remove(), 4000);
 }
 
 // --- STRICT AUTHENTICATION ---
@@ -32,8 +32,7 @@ function handleAdminLogin() {
     if (user === "WestpabloBluepeak" && pass === "@westpablo_bluepeak0917") {
         isAdminAuth = true;
         notify("Master Control Unlocked");
-        fetchAdminData(); // Load real DB data
-        render();
+        fetchAdminData(); 
     } else {
         notify("Access Denied: Invalid Credentials", "red");
     }
@@ -50,7 +49,7 @@ async function fetchAdminData() {
             render();
         }
     } catch(e) {
-        console.log("Stats fetch error");
+        notify("Failed to load database stats", "red");
     }
 }
 
@@ -72,15 +71,15 @@ async function handleTopUp() {
         const result = await res.json();
         
         if (res.ok) {
-            notify(`Success: Credited ₦${amount} to ${targetUser}`);
+            notify(result.message); // Will show "Successfully credited..."
             document.getElementById('target_user').value = '';
             document.getElementById('topup_amount').value = '';
             fetchAdminData();
         } else {
-            notify(result.message || "Top-up failed", "red");
+            notify(result.message, "red"); // Will show exact error (e.g., "User not found")
         }
     } catch (err) {
-        notify("Server Error", "red");
+        notify("Server Connection Error", "red");
     }
 }
 
@@ -101,11 +100,18 @@ async function handleAddPlan() {
             body: JSON.stringify({ name, minDeposit: Number(minDeposit), dailyRoi: Number(dailyRoi), duration: Number(duration) })
         });
         
+        const result = await res.json();
+
         if (res.ok) {
             notify("Plan Published Successfully!");
-            fetchAdminData(); 
+            // Clear inputs
+            document.getElementById('plan_name').value = '';
+            document.getElementById('plan_min').value = '';
+            document.getElementById('plan_roi').value = '';
+            document.getElementById('plan_days').value = '';
+            fetchAdminData(); // Refresh the list
         } else {
-            notify("Failed to publish plan", "red");
+            notify(result.message || "Failed to publish plan", "red");
         }
     } catch (err) {
         notify("Server Error", "red");
@@ -113,33 +119,26 @@ async function handleAddPlan() {
 }
 
 // --- UI COMPONENTS ---
-
-// 1. The Security Login Screen
 function LoginScreen() {
     return `
         <div class="pt-24 animate-in zoom-in duration-500 max-w-sm mx-auto">
             <div class="text-center mb-12">
-                <div class="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <span class="text-3xl">🛡️</span>
-                </div>
+                <div class="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6"><span class="text-3xl">🛡️</span></div>
                 <h1 class="text-3xl font-black text-white italic tracking-tighter uppercase">Master <span class="text-[#C9A227]">Control</span></h1>
                 <p class="text-gray-500 text-[9px] uppercase tracking-[0.4em] mt-2 font-bold">Restricted Admin Access</p>
             </div>
-            
             <div class="space-y-4">
-                <input type="text" id="admin_user" placeholder="Admin ID" class="w-full bg-[#111827] border border-white/10 p-5 rounded-2xl text-white outline-none focus:border-[#C9A227] transition-all">
-                <input type="password" id="admin_pass" placeholder="Master Password" class="w-full bg-[#111827] border border-white/10 p-5 rounded-2xl text-white outline-none focus:border-[#C9A227] transition-all">
-                <button onclick="handleAdminLogin()" class="w-full bg-[#C9A227] py-5 rounded-2xl font-black text-black shadow-2xl shadow-yellow-500/20 active:scale-95 transition-all mt-4 uppercase tracking-widest text-[10px]">Authenticate</button>
-                <button onclick="window.location.href='/'" class="w-full bg-white/5 py-4 rounded-2xl font-black text-gray-400 text-[10px] uppercase tracking-widest mt-2">Return to Site</button>
+                <input type="text" id="admin_user" placeholder="Admin ID" class="w-full bg-[#111827] border border-white/10 p-5 rounded-2xl text-white outline-none focus:border-[#C9A227]">
+                <input type="password" id="admin_pass" placeholder="Master Password" class="w-full bg-[#111827] border border-white/10 p-5 rounded-2xl text-white outline-none focus:border-[#C9A227]">
+                <button onclick="handleAdminLogin()" class="w-full bg-[#C9A227] py-5 rounded-2xl font-black text-black active:scale-95 transition-all mt-4 uppercase tracking-widest text-[10px]">Authenticate</button>
             </div>
         </div>
     `;
 }
 
-// 2. The Bottom Navigation Bar
 const AdminBottomNav = () => `
     <div class="fixed bottom-0 left-0 right-0 bg-[#0B0B0B]/95 backdrop-blur-2xl border-t border-white/5 p-4 flex justify-around items-center z-50">
-        ${['overview', 'users', 'plans', 'support'].map(t => `
+        ${['overview', 'plans'].map(t => `
             <button onclick="switchTab('${t}')" class="flex flex-col items-center transition-all ${currentAdminTab === t ? 'text-[#C9A227] scale-110' : 'text-gray-600'}">
                 <span class="text-[8px] font-black uppercase tracking-widest">${t}</span>
             </button>
@@ -153,11 +152,11 @@ function Overview() {
             <div class="grid grid-cols-2 gap-4 mb-8">
                 <div class="bg-white/5 border border-white/5 p-6 rounded-[30px]">
                     <p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Total Users</p>
-                    <p class="text-2xl font-black text-white">${stats.totalUsers || 0}</p>
+                    <p class="text-2xl font-black text-white">${stats.totalUsers}</p>
                 </div>
                 <div class="bg-white/5 border border-white/5 p-6 rounded-[30px]">
                     <p class="text-[9px] text-gray-500 font-bold uppercase mb-1">System Earnings</p>
-                    <p class="text-xl font-black text-[#C9A227]">₦ ${stats.totalEarned || 0}</p>
+                    <p class="text-xl font-black text-[#C9A227]">₦ ${stats.totalEarned}</p>
                 </div>
             </div>
             
@@ -188,12 +187,12 @@ function PlanManager() {
                     <input type="number" id="plan_roi" placeholder="Daily % ROI" class="bg-black/40 border border-white/10 p-4 rounded-xl text-white text-xs outline-none">
                     <input type="number" id="plan_days" placeholder="Duration (Days)" class="col-span-2 bg-black/40 border border-white/10 p-4 rounded-xl text-white text-xs outline-none">
                 </div>
-                <button onclick="handleAddPlan()" class="w-full bg-[#C9A227] text-black py-4 rounded-xl font-black text-[10px] uppercase active:scale-95">Publish to Live Market</button>
+                <button onclick="handleAddPlan()" class="w-full bg-[#C9A227] text-black py-4 rounded-xl font-black text-[10px] uppercase active:scale-95">Publish Plan</button>
             </div>
             
             <h4 class="text-[10px] text-gray-600 font-bold uppercase mb-4 pl-4 tracking-widest">Active Market Offerings</h4>
             <div class="space-y-3">
-                ${activePlans.length === 0 ? '<p class="text-xs text-gray-600 italic text-center">No plans published.</p>' : ''}
+                ${activePlans.length === 0 ? '<p class="text-xs text-gray-600 italic text-center py-6 border border-white/5 rounded-2xl bg-white/5">0 Plans in Database</p>' : ''}
                 ${activePlans.map(plan => `
                     <div class="bg-[#111827] p-5 rounded-2xl flex justify-between items-center border border-white/5">
                         <div>
@@ -208,7 +207,6 @@ function PlanManager() {
     `;
 }
 
-// --- MASTER RENDER ---
 function render() {
     if (!isAdminAuth) {
         app.innerHTML = `<div class="min-h-screen bg-[#0B0B0B] text-white p-6 font-sans">${LoginScreen()}</div>`;
@@ -217,9 +215,7 @@ function render() {
 
     let content = '';
     if (currentAdminTab === 'overview') content = Overview();
-    if (currentAdminTab === 'users') content = `<div class="p-10 text-center text-gray-600 font-bold text-[10px] uppercase">User monitoring module active.</div>`;
     if (currentAdminTab === 'plans') content = PlanManager();
-    if (currentAdminTab === 'support') content = `<div class="p-10 text-center text-gray-600 font-bold text-[10px] uppercase">No pending support tickets.</div>`;
 
     app.innerHTML = `
         <div class="max-w-md mx-auto min-h-screen bg-[#0B0B0B] text-white p-6 pb-24 font-sans selection:bg-[#C9A227]">
@@ -233,5 +229,4 @@ function render() {
     `;
 }
 
-// Start App
 render();
