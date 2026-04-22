@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema({
   earnedBalance: { type: Number, default: 0 },
   referralBalance: { type: Number, default: 0 },
 
-  // Security & Bank
+  // Security & Bank (Lockdown logic)
   bankDetails: {
     bankName: { type: String },
     accountNumber: { type: String },
@@ -25,8 +25,15 @@ const userSchema = new mongoose.Schema({
   },
   withdrawalPin: { type: String },
   
+  // Support System (Two-way chat)
+  supportChat: [{
+    sender: { type: String, enum: ['user', 'admin'] },
+    message: String,
+    timestamp: { type: Date, default: Date.now }
+  }],
+
   // Referrals
-  referredBy: { type: String }, // Username of referrer
+  referredBy: { type: String }, 
   referralCount: { type: Number, default: 0 },
 
   authProvider: { type: String, default: 'manual' }
