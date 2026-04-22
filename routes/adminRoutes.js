@@ -4,31 +4,57 @@ const User = require('../models/User');
 const Plan = require('../models/Plan');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
 
-// 1. Get Total Stats
-router.get('/stats', protect, adminOnly, async (req, res) => {
-  const users = await User.find().select('-password');
-  const totalEarnings = users.reduce((acc, user) => acc + user.earnedBalance, 0);
-  res.json({ totalUsers: users.length, totalEarnings, users });
+// Get Total Users and Platform Earnings
+router.get('/dashboard-stats', protect, adminOnly, async (req, res) => {
+  try {
+    const users = await User.find().select('-password');
+    const totalUsers = users.length;
+    const totalPlatformEarnings = users.reduce((acc, user) => acc + user.earnedBalance, 0);
+    
+    res.json({ totalUsers, totalPlatformEarnings, users });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
-// 2. Add Investment Plan
-router.post('/plans', protect, adminOnly, async (req, res) => {
-  const plan = new Plan(req.body);
-  await plan.save();
-  res.json({ message: 'Plan created successfully', plan });
+// Create/Add new Investment Plan
+router.post('/add-plan', protect, adminOnly, async (req, res) => {
+  try {
+    const { name, minAmount, dailyProfitPercent, weeklyProfitPercent, durationDays, isBestPlan } = req.body;
+    
+    // Calculate total return for the user explanation
+    const totalReturnPercent = dailyProfitPercent * durationDays;
+
+    const newPlan = new Plan({
+      name, minAmount, dailyProfitPercent, weeklyProfitPercent, durationDays, totalReturnPercent, isBestPlan
+    });
+
+    await newPlan.save();
+    res.status(201).json({ message: "Plan added successfully", newPlan });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
-// 3. Top up User Balance
-router.post('/topup', protect, adminOnly, async (req, res) => {
-  const { userId, amount, type } = req.body; // type: 'deposit' or 'earned'
-  const user = await User.findById(userId);
-  if (!user) return res.status(404).json({ message: 'User not found' });
+// Manual Top-up for a specific user
+router.post('/topup-user', protect, adminOnly, async (req, res) => {
+  try {
+    const { userId, amount, balanceType } = req.body; // balanceType = 'deposit' or 'earned'
+    const user = await User.findById(userId);
+    
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-  if (type === 'deposit') user.depositBalance += amount;
-  else user.earnedBalance += amount;
+    if (balanceType === 'deposit') {
+      user.depositBalance += Number(amount);
+    } else {
+      user.earnedBalance += Number(amount);
+    }
 
-  await user.save();
-  res.json({ message: 'Balance updated', user });
+    await user.save();
+    res.json({ message: `Successfully topped up ${user.username}`, user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 module.exports = router;
