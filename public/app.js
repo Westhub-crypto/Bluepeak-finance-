@@ -24,13 +24,13 @@ async function switchTab(tab) {
     window.scrollTo(0,0);
 }
 
+// Custom Premium Notification (Completely replaces default browser alerts)
 function notify(msg, type = "gold") {
-    // Remove old toast if exists
     const oldToast = document.querySelector('.toast-msg');
     if(oldToast) oldToast.remove();
 
     const toast = document.createElement('div');
-    toast.className = `toast-msg fixed top-10 left-1/2 -translate-x-1/2 z-[100] px-8 py-4 rounded-2xl font-black text-[10px] shadow-2xl animate-in fade-in slide-in-from-top duration-300 ${type === 'gold' ? 'bg-[#C9A227] text-black' : 'bg-red-600 text-white'}`;
+    toast.className = `toast-msg fixed top-10 left-1/2 -translate-x-1/2 z-[100] px-8 py-4 rounded-2xl font-black text-[10px] shadow-2xl animate-in fade-in slide-in-from-top duration-300 whitespace-nowrap ${type === 'gold' ? 'bg-[#C9A227] text-black' : 'bg-red-600 text-white'}`;
     toast.innerText = msg.toUpperCase();
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 4000);
@@ -108,22 +108,17 @@ async function handleRegister() {
     }
 }
 
-async function handlePayment(type) {
-    if (type === 'Withdraw') {
-        return notify("Withdrawal limit not reached. Contact Support.", "red");
-    }
+// Dedicated Deposit Logic (No more pop-ups!)
+async function processDeposit() {
+    const amtInput = document.getElementById('deposit_amount').value;
+    if (!amtInput) return notify("Please enter an amount", "red");
     
-    // 1. Ask user for amount
-    const amountStr = prompt("Enter amount to deposit (₦):");
-    if (!amountStr) return; // User cancelled
-    
-    const amount = Number(amountStr);
-    if (isNaN(amount) || amount < 1000) return notify("Minimum deposit is ₦1,000", "red");
+    const amount = Number(amtInput);
+    if (isNaN(amount) || amount < 3000) return notify("Minimum deposit is ₦3,000", "red");
 
     notify("Connecting to Secure Gateway...", "gold");
 
     try {
-        // 2. Contact Backend for Squad Payment Link
         const res = await fetch(`${API_URL}/api/payment/initiate`, {
             method: 'POST',
             headers: { 
@@ -135,7 +130,6 @@ async function handlePayment(type) {
         
         const result = await res.json();
         
-        // 3. Redirect to Squad Checkout Page
         if (res.ok && result.checkout_url) {
             window.location.href = result.checkout_url;
         } else {
@@ -144,6 +138,10 @@ async function handlePayment(type) {
     } catch (err) {
         notify("Payment Server Offline", "red");
     }
+}
+
+function handleWithdraw() {
+    notify("Withdrawal limit not reached. Contact Support.", "red");
 }
 
 // --- UI SCREENS ---
@@ -211,8 +209,8 @@ function HomePage() {
                 <p class="text-gray-500 text-[9px] font-black uppercase tracking-[0.4em] mb-4">Earned Profit</p>
                 <h2 class="text-5xl font-black text-white tracking-tighter mb-12">₦ ${userData.earned.toLocaleString()}</h2>
                 <div class="flex gap-4">
-                    <button onclick="handlePayment('Deposit')" class="flex-1 bg-[#1E90FF] py-4 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-blue-500/30 active:scale-95">Deposit</button>
-                    <button onclick="handlePayment('Withdraw')" class="flex-1 bg-white text-black py-4 rounded-2xl font-black text-[10px] uppercase active:scale-95">Withdraw</button>
+                    <button onclick="switchTab('deposit')" class="flex-1 bg-[#1E90FF] py-4 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-blue-500/30 active:scale-95 transition-all">Deposit</button>
+                    <button onclick="handleWithdraw()" class="flex-1 bg-white text-black py-4 rounded-2xl font-black text-[10px] uppercase active:scale-95 transition-all">Withdraw</button>
                 </div>
             </div>
 
@@ -220,6 +218,37 @@ function HomePage() {
                 <div><p class="text-[8px] text-gray-500 uppercase font-black">Deposit Bal.</p><p class="text-white font-black text-lg italic">₦ ${userData.balance}</p></div>
                 <div class="text-right"><p class="text-[8px] text-gray-500 uppercase font-black">Status</p><p class="text-[#C9A227] font-black text-[10px] uppercase italic">Elite</p></div>
             </div>
+        </div>
+    `;
+}
+
+// The New Dedicated Deposit Page
+function DepositPage() {
+    return `
+        <div class="animate-in slide-in-from-right duration-500 pb-20">
+            <div class="flex items-center gap-4 mb-8">
+                <button onclick="switchTab('home')" class="w-10 h-10 bg-[#111827] rounded-full flex items-center justify-center border border-white/10 text-white font-black hover:bg-white/5 transition-all">←</button>
+                <h2 class="text-2xl font-black text-white italic uppercase tracking-tighter">Fund <span class="text-[#1E90FF]">Vault</span></h2>
+            </div>
+
+            <div class="bg-[#111827] p-8 rounded-[35px] border border-white/5 mb-6 shadow-xl">
+                <p class="text-[9px] text-gray-500 font-black uppercase mb-4 tracking-widest italic">Enter Amount</p>
+                <div class="relative mb-8">
+                    <span class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 font-black text-xl">₦</span>
+                    <input type="number" id="deposit_amount" placeholder="3000" class="w-full bg-black/40 border border-white/10 p-5 pl-12 rounded-2xl text-white font-black text-2xl outline-none focus:border-[#1E90FF] transition-all">
+                </div>
+
+                <p class="text-[9px] text-gray-500 font-black uppercase mb-4 tracking-widest italic">Quick Select</p>
+                <div class="grid grid-cols-2 gap-3 mb-8">
+                    ${[5000, 10000, 50000, 100000].map(amt => `
+                        <button onclick="document.getElementById('deposit_amount').value = ${amt}" class="bg-white/5 border border-white/10 py-4 rounded-xl font-black text-xs hover:bg-[#1E90FF]/20 hover:border-[#1E90FF] active:scale-95 transition-all">₦${amt.toLocaleString()}</button>
+                    `).join('')}
+                </div>
+
+                <button onclick="processDeposit()" class="w-full bg-[#1E90FF] py-5 rounded-2xl font-black text-white text-[10px] uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all">Proceed to Secure Gateway</button>
+            </div>
+            
+            <p class="text-center text-[9px] text-red-400/80 font-black uppercase tracking-widest bg-red-500/5 py-3 rounded-xl border border-red-500/10">Strict Minimum Deposit: ₦3,000</p>
         </div>
     `;
 }
@@ -245,7 +274,7 @@ function ProfilePage() {
                     <div class="flex justify-between border-b border-white/5 pb-2"><span class="text-gray-600 uppercase">Status</span><span class="text-green-500 font-bold uppercase tracking-tighter">Active</span></div>
                 </div>
             </div>
-            <button onclick="localStorage.removeItem('token'); location.reload();" class="w-full bg-red-500/10 border border-red-500/20 text-red-500 py-4 rounded-2xl font-black text-[10px] uppercase">Logout</button>
+            <button onclick="localStorage.removeItem('token'); location.reload();" class="w-full bg-red-500/10 border border-red-500/20 text-red-500 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest">Logout</button>
         </div>
     `;
 }
@@ -255,6 +284,7 @@ function render() {
     if (currentTab === 'login') content = LoginPage();
     else if (currentTab === 'register') content = RegisterPage();
     else if (currentTab === 'home') content = HomePage();
+    else if (currentTab === 'deposit') content = DepositPage();
     else if (currentTab === 'plans') content = PlansPage();
     else if (currentTab === 'profile') content = ProfilePage();
     else if (currentTab === 'invite') content = `
@@ -262,7 +292,7 @@ function render() {
             <h2 class="text-4xl font-black text-white italic mb-4 uppercase">INVITE <span class="text-[#C9A227]">& EARN</span></h2>
             <div class="bg-[#111827] p-8 rounded-[40px] border border-dashed border-white/10 mx-6">
                 <p class="text-[9px] text-gray-600 font-bold uppercase mb-4 tracking-widest">Ref Link</p>
-                <div class="bg-black/50 p-4 rounded-xl border border-white/5 text-[#1E90FF] font-mono text-[9px] truncate">bluepeak-finance.onrender.com/ref?id=${userData.username}</div>
+                <div class="bg-black/50 p-4 rounded-xl border border-white/5 text-[#1E90FF] font-mono text-[9px] truncate">bluepeak.com/ref?id=${userData.username}</div>
             </div>
         </div>
     `;
@@ -275,7 +305,7 @@ function render() {
     app.innerHTML = `
         <div class="max-w-md mx-auto min-h-screen bg-[#0B0B0B] text-white p-6 pb-32 font-sans overflow-x-hidden selection:bg-[#1E90FF]">
             ${content}
-            ${isLoggedIn ? Navigation() : ''}
+            ${isLoggedIn && currentTab !== 'deposit' ? Navigation() : ''}
         </div>
     `;
 }
