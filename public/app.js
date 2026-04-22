@@ -2,7 +2,6 @@
 const API_URL = window.location.origin;
 let currentTab = 'login'; 
 let isLoggedIn = false;
-const app = document.getElementById('app');
 
 // Live Data Store
 let userData = { username: "", balance: 0, earned: 0, referrals: 0, refEarnings: 0 };
@@ -14,7 +13,9 @@ async function switchTab(tab) {
         notify("Authentication Required", "red");
         return;
     }
-    if (isLoggedIn) await fetchLiveData();
+    if (isLoggedIn) {
+        await fetchLiveData();
+    }
     
     currentTab = tab;
     render();
@@ -50,9 +51,11 @@ async function fetchLiveData() {
         }
 
         const resPlans = await fetch(`${API_URL}/api/auth/plans`);
-        if (resPlans.ok) activePlans = await resPlans.json(); 
+        if (resPlans.ok) {
+            activePlans = await resPlans.json(); 
+        }
     } catch (err) {
-        console.log("Sync Error");
+        console.log("Data Sync Error");
     }
 }
 
@@ -148,7 +151,7 @@ async function processDeposit() {
 
 // --- UI COMPONENTS ---
 const Navigation = () => `
-    <div class="fixed bottom-0 left-0 right-0 bg-[#020617]/80 backdrop-blur-2xl border-t border-white/5 p-4 pb-6 flex justify-around items-center z-50">
+    <div class="fixed bottom-0 left-0 right-0 bg-[#020617]/90 backdrop-blur-2xl border-t border-white/5 p-4 pb-6 flex justify-around items-center z-50">
         ${[
             {id: 'home', icon: '🏠', label: 'Home'},
             {id: 'plans', icon: '📊', label: 'Plans'},
@@ -223,7 +226,7 @@ function HomePage() {
                 </div>
                 <div class="w-10 h-10 rounded-full border border-[#1E90FF]/30 p-[2px]">
                     <div class="w-full h-full bg-[#111827] rounded-full flex items-center justify-center text-[#1E90FF] font-bold shadow-[0_0_15px_rgba(30,144,255,0.3)]">
-                        ${userData.username.charAt(0).toUpperCase()}
+                        ${userData.username ? userData.username.charAt(0).toUpperCase() : 'U'}
                     </div>
                 </div>
             </div>
@@ -262,25 +265,6 @@ function HomePage() {
                     <svg viewBox="0 0 100 30" class="w-full h-full preserve-3d" preserveAspectRatio="none">
                         <path d="M0,25 Q15,10 30,20 T60,5 T100,15" fill="none" stroke="#10B981" stroke-width="1.5" style="filter: drop-shadow(0px 4px 8px rgba(16,185,129,0.6));" />
                     </svg>
-                </div>
-            </div>
-
-            <div class="mb-8">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xs font-semibold text-white tracking-wide">Recent Transactions</h3>
-                    <span class="text-[9px] text-[#1E90FF] cursor-pointer">See all</span>
-                </div>
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between bg-white/[0.02] border border-white/5 p-3.5 rounded-[16px]">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-[#1E90FF]/10 text-[#1E90FF] flex items-center justify-center text-xs">↓</div>
-                            <div>
-                                <p class="text-[11px] font-semibold text-white">System Init</p>
-                                <p class="text-[9px] text-gray-500 mt-0.5">Account Created</p>
-                            </div>
-                        </div>
-                        <p class="text-[11px] font-bold text-gray-400">₦0.00</p>
-                    </div>
                 </div>
             </div>
 
@@ -352,4 +336,23 @@ function PlansPage() {
                                 <p class="text-white font-semibold text-[11px] mt-0.5">₦${plan.minDeposit.toLocaleString()}</p>
                             </div>
                             <div class="bg-black/30 p-3 rounded-[12px] border border-white/5">
-                     
+                                <p class="text-[9px] text-gray-500 font-medium">Duration</p>
+                                <p class="text-white font-semibold text-[11px] mt-0.5">${plan.duration} Days</p>
+                            </div>
+                        </div>
+                        <button onclick="notify('Insufficient Balance. Please Deposit.', 'red')" class="w-full bg-[#1E90FF] py-3 rounded-[12px] font-bold text-white text-[11px] shadow-[0_0_15px_rgba(30,144,255,0.3)] active:scale-95 transition-all">Invest Now</button>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function ProfilePage() {
+    return `
+        <div class="animate-in fade-in pt-4 pb-20 space-y-6">
+            <h2 class="text-2xl font-bold text-white tracking-tight">Account Profile</h2>
+            <div class="bg-white/[0.03] p-5 rounded-[20px] border border-white/10">
+                <p class="text-[10px] text-gray-400 font-medium mb-4 uppercase tracking-widest">User Details</p>
+                <div class="space-y-3 text-xs">
+                    <div class="flex justify-betw
