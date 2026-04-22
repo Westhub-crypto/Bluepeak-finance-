@@ -3,9 +3,9 @@ let currentTab = 'login';
 const app = document.getElementById('app');
 
 let userData = {
-    username: "Westpablo",
-    balance: 15000.00,
-    earned: 450.00,
+    username: "Investor",
+    balance: 0.00,
+    earned: 0.00,
     bankSet: false,
     bankName: "",
     accountNumber: "",
@@ -19,21 +19,11 @@ const investmentPlans = [
     { id: 3, name: 'Apex Ridge', roi: '90%', duration: '30 Days', min: '200,000', best: false, daily: '₦6,000' }
 ];
 
-// --- APP ENGINE ---
+// --- NAVIGATION ENGINE ---
 function switchTab(tab) {
     currentTab = tab;
     render();
     window.scrollTo(0,0);
-    if(tab === 'home') startProfitAnimation();
-}
-
-function startProfitAnimation() {
-    const el = document.getElementById('profit-display');
-    if (!el) return;
-    setInterval(() => {
-        userData.earned += 0.01;
-        if(el) el.innerText = `₦ ${userData.earned.toFixed(2)}`;
-    }, 5000);
 }
 
 // --- COMPONENTS ---
@@ -63,7 +53,7 @@ function LoginPage() {
     return `
         <div class="pt-16 animate-in fade-in zoom-in duration-500">
             <h1 class="text-5xl font-black text-white mb-2 italic tracking-tighter">BLUEPEAK<span class="text-[#1E90FF]">.</span></h1>
-            <p class="text-gray-500 text-[10px] mb-12 uppercase tracking-[0.3em] font-bold">Elite Investment Platform</p>
+            <p class="text-gray-500 text-[10px] mb-12 uppercase tracking-[0.3em] font-bold">West Africa's Elite Finance</p>
             
             <div class="space-y-4">
                 <input type="text" placeholder="Username" class="w-full bg-[#111827] border border-gray-800 p-5 rounded-2xl text-white outline-none focus:border-[#1E90FF]">
@@ -88,17 +78,9 @@ function HomePage() {
                 <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest">${userData.username}</p>
             </div>
 
-            <div class="bg-blue-600/10 border border-blue-500/20 p-4 rounded-2xl mb-8 flex items-start gap-3">
-                <span class="text-lg">🤖</span>
-                <div>
-                    <p class="text-[9px] text-blue-400 font-bold uppercase">AI Suggestion</p>
-                    <p class="text-[11px] text-gray-300">The market is bullish on <span class="text-[#C9A227]">Summit Gold</span> today.</p>
-                </div>
-            </div>
-
             <div class="bg-[#111827] p-8 rounded-[40px] border border-gray-800 mb-8 relative shadow-2xl">
                 <p class="text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">Total Earned</p>
-                <h3 class="text-4xl font-black text-[#C9A227] mb-8 tracking-tighter" id="profit-display">₦ ${userData.earned.toFixed(2)}</h3>
+                <h3 class="text-4xl font-black text-[#C9A227] mb-8 tracking-tighter">₦ ${userData.earned.toLocaleString()}</h3>
                 <div class="flex gap-4">
                     <button class="flex-1 bg-[#1E90FF] py-4 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-blue-500/20">Deposit</button>
                     <button class="flex-1 bg-white text-black py-4 rounded-2xl font-black text-[10px] uppercase">Withdraw</button>
@@ -122,8 +104,8 @@ function HomePage() {
 function PlansPage() {
     return `
         <div class="animate-in slide-in-from-bottom duration-500">
-            <h2 class="text-3xl font-black text-white mb-2 italic">PEAK <span class="text-[#C9A227]">INVEST</span></h2>
-            <p class="text-gray-500 text-[10px] mb-10 font-bold uppercase tracking-widest text-center">Elite Returns. Verified Capital.</p>
+            <h2 class="text-3xl font-black text-white mb-2 italic text-center">PEAK <span class="text-[#C9A227]">INVEST</span></h2>
+            <p class="text-gray-500 text-[10px] mb-10 font-bold uppercase tracking-widest text-center underline decoration-[#C9A227]">Elite Opportunities</p>
 
             <div class="space-y-8">
                 ${investmentPlans.map(plan => `
@@ -138,7 +120,7 @@ function PlansPage() {
                             <div><p class="text-[8px] text-gray-600 uppercase">Term</p><p class="font-bold text-white text-xs">${plan.duration}</p></div>
                             <div><p class="text-[8px] text-gray-600 uppercase">Min</p><p class="font-bold text-white text-xs">₦${plan.min}</p></div>
                         </div>
-                        <button class="w-full ${plan.best ? 'bg-[#C9A227] text-black' : 'bg-[#1E90FF] text-white'} py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all">Invest Now</button>
+                        <button class="w-full ${plan.best ? 'bg-[#C9A227] text-black' : 'bg-[#1E90FF] text-white'} py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest">Invest Now</button>
                     </div>
                 `).join('')}
             </div>
@@ -156,11 +138,11 @@ function ProfilePage() {
                 <div class="space-y-5">
                     <div>
                         <label class="text-[9px] text-gray-600 uppercase mb-2 block font-bold">Bank Name</label>
-                        <input type="text" id="bankName" ${userData.bankSet ? 'disabled' : ''} value="${userData.bankName}" placeholder="e.g. Access Bank" class="w-full bg-black/40 border border-gray-800 p-4 rounded-xl text-white text-sm outline-none">
+                        <input type="text" id="bankName" ${userData.bankSet ? 'disabled' : ''} value="${userData.bankName}" placeholder="e.g. Access Bank" class="w-full bg-black/40 border border-gray-800 p-4 rounded-xl text-white text-sm outline-none disabled:opacity-30">
                     </div>
                     <div>
                         <label class="text-[9px] text-gray-600 uppercase mb-2 block font-bold">Account Number</label>
-                        <input type="number" id="accNum" ${userData.bankSet ? 'disabled' : ''} value="${userData.accountNumber}" placeholder="0000000000" class="w-full bg-black/40 border border-gray-800 p-4 rounded-xl text-white text-sm outline-none">
+                        <input type="number" id="accNum" ${userData.bankSet ? 'disabled' : ''} value="${userData.accountNumber}" placeholder="0000000000" class="w-full bg-black/40 border border-gray-800 p-4 rounded-xl text-white text-sm outline-none disabled:opacity-30">
                     </div>
                     <div>
                         <label class="text-[9px] text-gray-600 uppercase mb-2 block font-bold">Withdrawal PIN</label>
@@ -171,7 +153,7 @@ function ProfilePage() {
                         <button onclick="saveBank()" class="w-full bg-[#C9A227] text-black font-black py-4 rounded-xl text-[10px] uppercase tracking-widest mt-4">Save & Lock</button>
                     ` : `
                         <div class="text-center p-4 bg-yellow-500/5 rounded-xl border border-yellow-500/20">
-                            <p class="text-yellow-600 text-[9px] font-bold uppercase tracking-tighter">Details are cryptographically locked.</p>
+                            <p class="text-yellow-600 text-[9px] font-bold uppercase tracking-tighter italic">Details Secured.</p>
                         </div>
                     `}
                 </div>
@@ -184,12 +166,10 @@ function ProfilePage() {
 function SupportPage() {
     return `
         <div class="animate-in fade-in duration-500">
-            <h2 class="text-2xl font-black text-white mb-2 italic tracking-tighter uppercase">Support <span class="text-[#1E90FF]">Center</span></h2>
-            <p class="text-gray-500 text-[10px] mb-8 font-bold uppercase tracking-widest">Elite Concierge Available 24/7</p>
-
+            <h2 class="text-2xl font-black text-white mb-2 italic">SUPPORT <span class="text-[#1E90FF]">CENTER</span></h2>
             <div class="bg-[#111827] p-6 rounded-3xl border border-gray-800 mb-6 h-64 overflow-y-auto space-y-4 flex flex-col" id="chatBox">
                 <div class="bg-gray-800 p-3 rounded-2xl rounded-bl-none self-start max-w-[80%]">
-                    <p class="text-[11px] text-white italic">Welcome to BluePeak Elite Support. How may we assist you with your investments today?</p>
+                    <p class="text-[11px] text-white">How can we assist you today?</p>
                 </div>
                 ${userData.supportMessages.map(msg => `
                     <div class="bg-[#1E90FF] p-3 rounded-2xl rounded-br-none self-end max-w-[80%]">
@@ -199,11 +179,9 @@ function SupportPage() {
             </div>
 
             <div class="flex gap-2">
-                <input type="text" id="supportInput" placeholder="Send a message..." class="flex-1 bg-[#111827] border border-gray-800 p-4 rounded-2xl text-white text-xs outline-none focus:border-[#1E90FF]">
+                <input type="text" id="supportInput" placeholder="Message agent..." class="flex-1 bg-[#111827] border border-gray-800 p-4 rounded-2xl text-white text-xs outline-none">
                 <button onclick="sendMessage()" class="bg-[#1E90FF] w-12 h-12 rounded-2xl flex items-center justify-center font-bold">↑</button>
             </div>
-            
-            <p class="text-center text-[9px] text-gray-600 mt-6 uppercase tracking-widest font-bold">Typical Response Time: <span class="text-green-500">5 Minutes</span></p>
         </div>
     `;
 }
@@ -212,23 +190,17 @@ function InvitePage() {
     return `
         <div class="text-center py-10 animate-in zoom-in duration-300">
             <div class="w-24 h-24 bg-[#C9A227]/5 border border-[#C9A227]/10 rounded-full flex items-center justify-center mx-auto mb-8">
-                <span class="text-4xl">🎁</span>
+                <span class="text-4xl">💎</span>
             </div>
-            <h2 class="text-3xl font-black text-white mb-4 italic tracking-tighter uppercase">Invite & <span class="text-[#C9A227]">Earn</span></h2>
-            <p class="text-gray-500 text-xs mb-12 px-6 font-medium leading-relaxed">Secure <span class="text-white font-bold">15% commission</span> on every deposit made by your network.</p>
+            <h2 class="text-3xl font-black text-white mb-4 italic uppercase">Invite & <span class="text-[#C9A227]">Earn</span></h2>
+            <p class="text-gray-500 text-xs mb-12 px-6">Earn <span class="text-white font-bold">15% commission</span> on every deposit.</p>
             
-            <div class="bg-[#111827] p-6 rounded-[35px] border border-dashed border-gray-800 mx-4 mb-10">
-                <p class="text-[9px] text-gray-600 font-bold uppercase mb-4 tracking-widest">Your Private Referral Link</p>
+            <div class="bg-[#111827] p-6 rounded-[35px] border border-dashed border-gray-800 mx-4 mb-10 text-center">
+                <p class="text-[9px] text-gray-600 font-bold uppercase mb-4 tracking-widest">Your Private Link</p>
                 <div class="bg-black/50 p-4 rounded-2xl flex justify-between items-center border border-gray-800">
                     <span class="text-[9px] font-mono text-blue-400 truncate">bluepeak-finance.onrender.com/ref?id=${userData.referralCode}</span>
-                    <button onclick="alert('Link Secured and Copied')" class="text-[#C9A227] font-black text-[10px] uppercase pl-4">Copy</button>
+                    <button onclick="alert('Copied')" class="text-[#C9A227] font-black text-[10px] uppercase pl-4">Copy</button>
                 </div>
-            </div>
-            
-            <div class="flex justify-around items-center px-6">
-                <div><p class="text-3xl font-black text-white">0</p><p class="text-[8px] text-gray-600 uppercase font-black">Active Invites</p></div>
-                <div class="w-[1px] bg-gray-800 h-10"></div>
-                <div><p class="text-3xl font-black text-[#C9A227]">₦0</p><p class="text-[8px] text-gray-600 uppercase font-black">Total Earned</p></div>
             </div>
         </div>
     `;
@@ -242,7 +214,6 @@ function saveBank() {
     userData.bankName = name;
     userData.accountNumber = num;
     userData.bankSet = true;
-    alert("Bank Details Encrypted & Locked.");
     render();
 }
 
@@ -265,7 +236,7 @@ function render() {
     if (currentTab === 'support') content = SupportPage();
 
     app.innerHTML = `
-        <div class="max-w-md mx-auto min-h-screen bg-[#0B0B0B] text-white p-6 pb-32 font-sans selection:bg-[#1E90FF]">
+        <div class="max-w-md mx-auto min-h-screen bg-[#0B0B0B] text-white p-6 pb-32">
             ${content}
             ${currentTab !== 'login' ? Navigation() : ''}
         </div>
