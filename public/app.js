@@ -1051,28 +1051,18 @@ function PlansPage() {
                                 </p>
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-3 mb-6">
-                            <div class="bg-black/40 p-3.5 rounded-[16px] border border-white/5 relative overflow-hidden group">
-                                <div class="absolute -right-2 -bottom-2 opacity-5 text-4xl group-hover:scale-110 transition-transform">💰</div>
-                                <p class="text-[8px] text-gray-500 font-bold uppercase tracking-widest mb-1">Min Deposit</p>
-                                <p class="text-white font-black text-sm">₦${plan.minDeposit.toLocaleString()}</p>
-                            </div>
-                            <div class="bg-black/40 p-3.5 rounded-[16px] border border-white/5 relative overflow-hidden group">
-                                <div class="absolute -right-2 -bottom-2 opacity-5 text-4xl group-hover:scale-110 transition-transform">⏳</div>
-                                <p class="text-[8px] text-gray-500 font-bold uppercase tracking-widest mb-1">Duration</p>
-                                <p class="text-white font-black text-sm">${plan.duration} Days</p>
-                            </div>
-                        </div>
-                        <button onclick="notify('Processing Contract Logic...', 'gold')" class="w-full ${btnStyle} py-4 rounded-[14px] font-bold text-[11px] uppercase tracking-widest active:scale-95 transition-all">
-                            Join ${plan.name}
-                        </button>
-                    </div>
-                    `;
-                }).join('')}
-            </div>
-        </div>
-    `;
-}
+                        <<div class="grid grid-cols-2 gap-3 mb-6">
+    <div class="bg-black/40 p-3.5 rounded-[16px] border border-white/5 relative overflow-hidden group">
+        <div class="absolute -right-2 -bottom-2 opacity-5 text-4xl group-hover:scale-110 transition-transform">💰</div>
+        <p class="text-[8px] text-gray-500 font-bold uppercase tracking-widest mb-1">Min Deposit</p>
+        <p class="text-white font-black text-sm">₦${(plan.minDeposit || plan.minAmount || 0).toLocaleString()}</p>
+    </div>
+    <div class="bg-black/40 p-3.5 rounded-[16px] border border-white/5 relative overflow-hidden group">
+        <div class="absolute -right-2 -bottom-2 opacity-5 text-4xl group-hover:scale-110 transition-transform">⏳</div>
+        <p class="text-[8px] text-gray-500 font-bold uppercase tracking-widest mb-1">Duration</p>
+        <p class="text-white font-black text-sm">${plan.duration || 0} Days</p>
+    </div>
+</div>
 
 function TrackPage() {
     return `
