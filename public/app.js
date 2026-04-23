@@ -1343,19 +1343,29 @@ function render() {
     }
 }
 
-// --- SAFE INITIALIZATION (UPDATED FOR HASH ROUTING) ---
-window.addEventListener('DOMContentLoaded', async () => {
-    // Determine the deep-linked tab, e.g., from example.com/#plans
-    const hash = window.location.hash.substring(1); // remove '#'
-    const requestedTab = hash || 'login'; // default to login
+// --- BULLETPROOF INITIALIZATION ---
+async function bootApplication() {
+    try {
+        console.log("Vault Engine Booting...");
+        const hash = window.location.hash.substring(1);
+        const requestedTab = hash || 'login';
 
-    if(localStorage.getItem('token')) {
-        isLoggedIn = true;
-        // Deep link should work, switchTab handles the auth check & data fetch
-        await switchTab(requestedTab);
-    } else {
-        // If not logged in, force an auth tab. switchTab handles the block
-        // on sub-tabs and will force the requestedTab (e.g., login or register)
-        await switchTab(requestedTab);
+        let token = null;
+        try { token = localStorage.getItem('token'); } catch(e) {}
+
+        if(token) {
+            isLoggedIn = true;
+            await switchTab(requestedTab);
+        } else {
+            await switchTab(requestedTab);
+        }
+    } catch (error) {
+        console.error("Boot Error:", error);
+        // This will show a red error on screen if the code actually fails, 
+        // rather than freezing on the splash screen.
+        document.body.innerHTML = `<div style="color:#ef4444; padding:40px; text-align:center; font-family:sans-serif; background:#020617; min-height:100vh; display:flex; align-items:center; justify-content:center;"><div><b>CRITICAL BOOT ERROR</b><br><br>${error.message}</div></div>`;
     }
-});
+}
+
+// Execute immediately without waiting for browser events
+bootApplication();;
