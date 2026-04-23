@@ -15,8 +15,11 @@ const app = express();
 // ==========================================
 // 🛡️ GLOBAL SECURITY MIDDLEWARE
 // ==========================================
-// 1. Helmet: Secures HTTP headers
-app.use(helmet());
+// 1. Helmet: Secures HTTP headers (CSP customized for Tailwind CDN)
+app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false
+}));
 
 // 2. CORS: Controls which domains can access your API
 app.use(cors({
