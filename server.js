@@ -49,7 +49,7 @@ if (process.env.NODE_ENV !== 'production') {
 // ==========================================
 // 🔌 ROUTE IMPORTS
 // ==========================================
-const authRoutes = require('./routes/auth_routes');
+const authRoutes = require('./routes/auth_Routes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const adminRoutes = require('./routes/adminroutes');
 const investmentRoutes = require('./routes/investmentRoutes');
