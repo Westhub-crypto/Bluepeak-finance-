@@ -55,21 +55,27 @@ const adminRoutes = require('./routes/adminRoutes');
 const investmentRoutes = require('./routes/investmentRoutes');
 
 // ==========================================
-// 🛣️ MOUNTING ROUTES
+// 🛣️ SERVING THE FRONTEND & ROUTING
 // ==========================================
+const path = require('path');
+
+// Tell the server to serve all HTML/CSS/JS files inside the "public" folder
+app.use(express.static(path.join(__dirname, 'public')));
+
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/investments', investmentRoutes);
 
-// Health Check Route (Used by hosting providers to ensure server is alive)
-app.get('/', (req, res) => {
-    res.status(200).json({ status: 'active', message: 'BluePeak Finance Engine Online' });
+// If someone requests an API route that doesn't exist, return a JSON error
+app.all('/api/*', (req, res) => {
+    res.status(404).json({ message: `API Endpoint not found.` });
 });
 
-// Fallback Route for undefined endpoints
-app.all('*', (req, res) => {
-    res.status(404).json({ message: `Cannot find ${req.originalUrl} on this server.` });
+// For ANY other request, serve the main index.html file (Allows frontend routing to work)
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ==========================================
