@@ -51,7 +51,7 @@ if (process.env.NODE_ENV !== 'production') {
 // ==========================================
 const authRoutes = require('./routes/auth_Routes');
 const paymentRoutes = require('./routes/paymentRoutes');
-const adminRoutes = require('./routes/adminroutes');
+const adminRoutes = require('./routes/adminRoutes');
 const investmentRoutes = require('./routes/investmentRoutes');
 
 // ==========================================
