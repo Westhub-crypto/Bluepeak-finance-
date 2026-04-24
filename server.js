@@ -54,9 +54,9 @@ if (process.env.NODE_ENV !== 'production') {
 // 🔌 API ROUTE IMPORTS
 // ==========================================
 // Ensure these files exist in your /routes and /controllers folders
-const authRoutes = require('./routes/auth_routes');
+const authRoutes = require('./routes/auth_Routes');
 const paymentRoutes = require('./routes/paymentRoutes');
-const adminRoutes = require('./routes/adminroutes');
+const adminRoutes = require('./routes/adminRoutes');
 const investmentRoutes = require('./routes/investmentRoutes');
 
 // ==========================================
